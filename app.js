@@ -42,6 +42,9 @@ const userSchema= new mongoose.Schema({
     },
     googleId:{
         type:String
+    },
+    secret:{
+        type:String
     }
 });
 
@@ -97,13 +100,28 @@ app.get("/register",function(req,res){
 });
 
 app.get("/secrets",function(req,res){
+   User.find({"secret":{$ne:null}},function(err,foundusers){
+    if(err){
+        console.log(err)
+    }
+    else{
+        if(foundusers){
+            res.render("secrets",{userwithsecrets:foundusers})
+        }
+    }
+   });
+});
+
+app.get("/submit",function(req,res){
     if(req.isAuthenticated()){
-        res.render("secrets");
+        res.render("submit");
     }
     else{
         res.redirect("/login")
     }
-});
+})
+
+
 app.get("/logout",function(req,res){
     req.logout(function(err){
         if(!err){
@@ -148,7 +166,23 @@ app.post("/login",function(req,res){
     })
 });
 
+app.post("/submit",function(req,res){
+    const submittedsecret = req.body.secret;
 
+    User.findById(req.user.id,function(err,founduser){
+        if(err){
+            console.log(err)
+        }
+        else{
+            if(founduser){
+                founduser.secret=submittedsecret
+                founduser.save(function(){
+                    res.redirect("/secrets");
+                });
+            }
+        }
+    });
+})
 
 app.listen(3000, function() {
 
